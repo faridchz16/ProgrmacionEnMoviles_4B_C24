@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.faridchavez.ayudacampus.model.EstadoTicket
 import com.faridchavez.ayudacampus.model.Prioridad
 import com.faridchavez.ayudacampus.ui.theme.colorPrioridad
+import com.faridchavez.ayudacampus.viewmodel.SlaInfo
 
 @Composable
 fun TicketCard(
@@ -37,6 +38,7 @@ fun TicketCard(
     estado: EstadoTicket,
     prioridad: Prioridad,
     fecha: Long,
+    slaInfo: SlaInfo? = null,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -94,6 +96,13 @@ fun TicketCard(
                         EstadoChip(estado)
                         PrioridadChip(prioridad)
                         Spacer(Modifier.weight(1f))
+                        if (slaInfo != null) {
+                            Text(
+                                slaInfo.texto,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = slaInfo.color
+                            )
+                        }
                         Text(
                             tiempoRelativo(fecha),
                             style = MaterialTheme.typography.labelSmall,

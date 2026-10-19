@@ -61,6 +61,7 @@ fun MisTicketsScreen(
     val filtro by vm.filtro.collectAsStateWithLifecycle()
     val busqueda by vm.busqueda.collectAsStateWithLifecycle()
     val abiertos by vm.abiertos.collectAsStateWithLifecycle()
+    val ahora by vm.ahora.collectAsStateWithLifecycle()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -149,6 +150,7 @@ fun MisTicketsScreen(
                             estado = t.estado,
                             prioridad = t.prioridad,
                             fecha = t.ticket.fecha,
+                            slaInfo = vm.calcularSla(t.ticket.fecha, t.prioridad, t.estado, ahora),
                             onClick = { onAbrir(t.ticket.id) }
                         )
                     }

@@ -43,6 +43,7 @@ private val FILTROS_BANDEJA = listOf(
 fun BandejaScreen(vm: BandejaViewModel, onAtender: (Int) -> Unit) {
     val tickets by vm.tickets.collectAsStateWithLifecycle()
     val filtro by vm.filtro.collectAsStateWithLifecycle()
+    val ahora by vm.ahora.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = { AppTopBar("Tickets") },
@@ -89,6 +90,7 @@ fun BandejaScreen(vm: BandejaViewModel, onAtender: (Int) -> Unit) {
                             estado = t.estado,
                             prioridad = t.prioridad,
                             fecha = t.ticket.fecha,
+                            slaInfo = vm.calcularSla(t.ticket.fecha, t.prioridad, t.estado, ahora),
                             onClick = { onAtender(t.ticket.id) }
                         )
                     }
