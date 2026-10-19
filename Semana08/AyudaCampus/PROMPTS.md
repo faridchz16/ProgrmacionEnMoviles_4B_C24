@@ -1,0 +1,58 @@
+# Prompts utilizados
+
+Fase 2 · rama `mejora-ia` · Asistente: Gemini en Android Studio.
+
+## Prompt 1 · Tiempo promedio de resolución
+
+**Texto enviado a Gemini:**
+> Tengo una app Kotlin con Jetpack Compose, Material 3, MVVM, Room y un AyudaRepository (interface). Agrega en el panel de soporte el tiempo promedio de resolucion de los tickets cerrados (fechaCierre - fecha). La consulta va en TicketDao, la funcion en AyudaRepository y su implementacion, y el valor se expone como StateFlow en PanelViewModel. La View solo lo muestra. No uses XML. Muestrame solo los archivos que cambian.
+
+**Qué generó la IA:** Usé el modo Agent con Gemini 3.1 Pro Preview. En el primer intento falló por cuota (RESOURCE_EXHAUSTED) y luego se quedó trabado más de 15 minutos: editó el DAO, el Repository y el ViewModel, pero nunca modificó `PanelScreen`, así que lo detuve y revertí. En el segundo intento generó todo: la consulta `AVG(fechaCierre - fecha)` filtrando `estado = 'CERRADO'` y `fechaCierre IS NOT NULL` con `Flow<Double?>`, la función en `AyudaRepository` y `AyudaRepositoryRoom`, un `StateFlow<String>` en `PanelViewModel` con el tiempo ya formateado ("2d 3h") y una tarjeta en `PanelScreen`.
+
+**Qué tuve que corregir yo:** El ViewModel devolvía el texto ya formateado, mezclando presentación con lógica. Lo cambié para que el Repository devuelva `Long?` (milisegundos), el ViewModel exponga `StateFlow<Long?>` y la View lo formatee con una función `formatoDuracion` reutilizable (que también usé en el SLA). Agregué un ícono a la tarjeta y el texto "Sin datos" cuando no hay tickets cerrados.
+
+**¿Respeta MVVM?:** Sí. El cálculo está en SQL en el DAO, el Repository expone un `Flow`, el ViewModel un `StateFlow` y la View solo muestra el valor.
+
+## Prompt 2 · Contador de SLA por prioridad
+
+**Texto enviado a Gemini:**
+> En la misma app (Compose + Material 3 + MVVM + Room), agrega un contador de SLA a cada ticket: el tiempo restante segun su prioridad (Alta 4 h, Media 24 h, Baja 72 h), contado desde la fecha de creacion. Solo aplica a tickets ABIERTO o EN_PROCESO. El calculo va en el ViewModel (MisTicketsViewModel y BandejaViewModel), que expone la hora actual como StateFlow actualizado cada minuto. La View (TicketCard) solo muestra el texto: verde si queda tiempo, ambar si queda menos del 25 % y rojo si vencio. No toques el DAO ni el Repository. No uses XML. Muestrame solo los archivos que cambian.
+
+**Qué generó la IA:** Agregó en ambos ViewModels un `StateFlow` `ahora` que emite cada minuto y una función `calcularSla` que llama a un helper `calcularSlaHelper`. El helper devuelve una data class `SlaInfo(texto, color)` solo para tickets ABIERTO o EN_PROCESO, con verde, ámbar (< 25 %) y rojo. No tocó el DAO ni el Repository. `TicketCard` recibe `SlaInfo` y muestra el texto en la fila de los chips.
+
+**Qué tuve que corregir yo:**
+- El ViewModel importaba `androidx.compose.ui.graphics.Color` y decidía los colores; eso hace que el ViewModel dependa de Compose. Moví la regla a `model/Sla.kt` (Kotlin puro: `restanteMs`, `fraccionRestante`, `vencido`) y ahora el color lo elige `TicketCard` con los colores del tema.
+- `TicketCard` importaba `SlaInfo` del paquete `viewmodel`, así que un componente de la View dependía del ViewModel. Ahora usa `model.Sla`.
+- Las horas (4/24/72) estaban repetidas en un `when`; usé `Prioridad.horasRespuesta`, que ya existía.
+- El formato del tiempo estaba duplicado; reutilicé `formatoDuracion`. Cuando vence, ahora dice "SLA vencido hace X" en lugar de solo "Vencido".
+
+**¿Respeta MVVM?:** La versión de la IA lo respetaba a medias (el cálculo estaba en el ViewModel, pero este dependía de Compose). La versión final sí lo respeta: la regla está en el modelo, el ViewModel expone `ahora` y `sla()`, y la View solo elige el color y muestra el texto.
+
+## Prompt 3 · Búsqueda avanzada en la bandeja
+
+**Texto enviado a Gemini:**
+> En la misma app, mejora la bandeja de Soporte (BandejaViewModel y BandejaScreen) para filtrar al mismo tiempo por estado, prioridad, categoria y texto (titulo, nombre del cliente o numero de ticket). Los filtros viven en el ViewModel en una data class FiltrosBandeja dentro de un MutableStateFlow, y la lista filtrada se expone como StateFlow con combine. Conserva el orden por prioridad que entrega el DAO. La View usa FilterChip de Material 3 y un boton "Limpiar filtros". El ViewModel solo conoce la interface AyudaRepository. No uses XML. Muestrame solo los archivos que cambian.
+
+**Qué generó la IA:** Creó `FiltrosBandeja` dentro de un `MutableStateFlow`, combinó los tickets con los filtros usando `combine` y `filter` (así conserva el orden del DAO), buscó por título, cliente y número (#0005), y en la View usó `FilterChip` para estado, prioridad y categoría, un botón "Limpiar filtros" y un botón para borrar el texto.
+
+**Qué tuve que corregir yo:**
+- Usaba `observarCategoriasActivas()`, así que no se podía filtrar por una categoría desactivada aunque tuviera tickets antiguos. Lo cambié a `observarCategorias()`.
+- La lógica de "tocar un chip ya marcado lo desmarca" y el cálculo de `hayFiltros` estaban en la View. Los moví al ViewModel (`seleccionarPrioridad`, `seleccionarCategoria` y `FiltrosBandeja.hayFiltros`).
+- Agregué el contador "N tickets", los colores de prioridad en sus chips, el ícono de cada categoría y una fila separada para cada tipo de filtro. La búsqueda también incluye la ubicación.
+
+**¿Respeta MVVM?:** Sí, en lo principal: los filtros y la lista filtrada viven en el ViewModel y este solo conoce `AyudaRepository`. La IA dejó algo de lógica en la View, que corregí.
+
+## Reflexión (5 líneas)
+- ¿Qué mejoró la IA y qué no?
+La IA acertó al ubicar cada pieza en su capa (consulta en el DAO, Flow en el Repository, StateFlow en el ViewModel) y usó bien combine y stateIn, pero no reutilizó lo que ya existía (Prioridad.horasRespuesta, el formateo del tiempo).
+
+- ¿Qué error cometió?
+Su error más serio fue meter Color de Compose en el ViewModel y hacer que TicketCard dependa del paquete viewmodel, lo que acopla las capas; además filtró solo categorías activas en la bandeja, rompiendo una regla de negocio.
+
+- ¿Qué aprendí sobre MVVM, Room y reglas de negocio?
+Aprendí en:
+MVVM: que un código funcione no significa que respete la arquitectura. Una forma rápida de revisarlo son los imports: si un ViewModel importa algo de androidx.compose.ui, o un componente de la View importa del paquete viewmodel, hay acoplamiento.
+
+Room: los cálculos sobre muchos registros (promedio, conteos, orden por prioridad) conviene hacerlos en SQL, en el DAO, y exponerlos como Flow para que la pantalla se actualice sola.
+
+Reglas de negocio: deben vivir fuera de la View (en el modelo o en el ViewModel), en Kotlin puro, para poder reutilizarlas y probarlas. Por ejemplo, calcularSla sirve igual para Mis tickets y la Bandeja. Además, la IA no conoce las reglas del negocio si no se las das: no sabía que las categorías inactivas pueden tener tickets.
