@@ -44,6 +44,8 @@ import com.faridchavez.ayudacampus.ui.theme.AyudaTheme
 import com.faridchavez.ayudacampus.viewmodel.CategoriasViewModel
 import com.faridchavez.ayudacampus.viewmodel.SesionViewModel
 import com.faridchavez.ayudacampus.viewmodel.ayudaViewModel
+import com.faridchavez.ayudacampus.ui.cliente.MisTicketsScreen
+import com.faridchavez.ayudacampus.viewmodel.MisTicketsViewModel
 
 @Composable
 fun NavAyuda() {
@@ -101,7 +103,17 @@ fun NavAyuda() {
 
                 // ---------------- Estudiante ----------------
                 navigation(startDestination = Rutas.MIS_TICKETS, route = Rutas.GRAFO_CLIENTE) {
-                    composable(Rutas.MIS_TICKETS) { EnConstruccion("Mis tickets", "Paso 7") }
+                    composable(Rutas.MIS_TICKETS) {
+                        val u = usuario ?: return@composable
+                        val vm = ayudaViewModel(clave = "mis-${u.id}") { app ->
+                            MisTicketsViewModel(app.repository, u)
+                        }
+                        MisTicketsScreen(
+                            vm = vm,
+                            onAbrir = { id -> nav.navigate(Rutas.detalleTicket(id)) },
+                            onNuevo = { nav.irA(Rutas.NUEVO_TICKET, Rutas.MIS_TICKETS) }
+                        )
+                    }
                     composable(Rutas.NUEVO_TICKET) { EnConstruccion("Nuevo ticket", "Paso 8") }
                     composable(
                         Rutas.DETALLE_TICKET,
