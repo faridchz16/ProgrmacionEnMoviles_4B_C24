@@ -48,6 +48,8 @@ import com.faridchavez.ayudacampus.ui.cliente.MisTicketsScreen
 import com.faridchavez.ayudacampus.viewmodel.MisTicketsViewModel
 import com.faridchavez.ayudacampus.ui.cliente.NuevoTicketScreen
 import com.faridchavez.ayudacampus.viewmodel.NuevoTicketViewModel
+import com.faridchavez.ayudacampus.ui.cliente.DetalleTicketScreen
+import com.faridchavez.ayudacampus.viewmodel.TicketDetalleViewModel
 
 @Composable
 fun NavAyuda() {
@@ -130,8 +132,14 @@ fun NavAyuda() {
                     composable(
                         Rutas.DETALLE_TICKET,
                         arguments = listOf(navArgument("id") { type = NavType.IntType })
-                    ) { EnConstruccion("Detalle del ticket", "Paso 9") }
-                    composable(Rutas.PERFIL) { EnConstruccion("Perfil", "Paso 12") }
+                    ) { entrada ->
+                        val u = usuario ?: return@composable
+                        val id = entrada.arguments?.getInt("id") ?: return@composable
+                        val vm = ayudaViewModel(clave = "detalle-$id-${u.id}") { app ->
+                            TicketDetalleViewModel(app.repository, id, u)
+                        }
+                        DetalleTicketScreen(vm = vm, onAtras = { nav.popBackStack() })
+                    }
                 }
 
                 // ---------------- Soporte TI ----------------
