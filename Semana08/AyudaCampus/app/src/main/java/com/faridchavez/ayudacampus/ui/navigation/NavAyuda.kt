@@ -46,6 +46,8 @@ import com.faridchavez.ayudacampus.viewmodel.SesionViewModel
 import com.faridchavez.ayudacampus.viewmodel.ayudaViewModel
 import com.faridchavez.ayudacampus.ui.cliente.MisTicketsScreen
 import com.faridchavez.ayudacampus.viewmodel.MisTicketsViewModel
+import com.faridchavez.ayudacampus.ui.cliente.NuevoTicketScreen
+import com.faridchavez.ayudacampus.viewmodel.NuevoTicketViewModel
 
 @Composable
 fun NavAyuda() {
@@ -114,7 +116,17 @@ fun NavAyuda() {
                             onNuevo = { nav.irA(Rutas.NUEVO_TICKET, Rutas.MIS_TICKETS) }
                         )
                     }
-                    composable(Rutas.NUEVO_TICKET) { EnConstruccion("Nuevo ticket", "Paso 8") }
+                    composable(Rutas.NUEVO_TICKET) {
+                        val u = usuario ?: return@composable
+                        val vm = ayudaViewModel(clave = "nuevo-${u.id}") { app ->
+                            NuevoTicketViewModel(app.repository, u)
+                        }
+                        NuevoTicketScreen(
+                            vm = vm,
+                            onAtras = { nav.popBackStack() },
+                            onEnviado = { nav.irA(Rutas.MIS_TICKETS, Rutas.MIS_TICKETS) }
+                        )
+                    }
                     composable(
                         Rutas.DETALLE_TICKET,
                         arguments = listOf(navArgument("id") { type = NavType.IntType })
