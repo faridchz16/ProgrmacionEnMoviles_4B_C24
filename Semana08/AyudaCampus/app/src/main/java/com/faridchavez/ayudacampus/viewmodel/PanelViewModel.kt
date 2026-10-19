@@ -57,6 +57,26 @@ class PanelViewModel(private val repo: AyudaRepository) : ViewModel() {
         .flatMapLatest { repo.observarAltasSinAtender(it) }
         .estado(0)
 
+    val tiempoPromedioResolucion: StateFlow<String> = repo.observarTiempoPromedioResolucion()
+        .map { ms -> formatearTiempoPromedio(ms) }
+        .estado("Sin datos")
+
+    private fun formatearTiempoPromedio(ms: Double?): String {
+        if (ms == null || ms <= 0) return "Sin datos"
+        val totalMinutos = (ms / 60_000).toLong()
+        val horas = totalMinutos / 60
+        val minutos = totalMinutos % 60
+        val dias = horas / 24
+        val horasRestantes = horas % 24
+
+        return when {
+            dias > 0 -> "${dias}d ${horasRestantes}h"
+            horas > 0 -> "${horas}h ${minutos}m"
+            totalMinutos > 0 -> "${minutos} min"
+            else -> "< 1 min"
+        }
+    }
+
     private companion object {
         const val UNA_HORA = 60 * 60 * 1000L
     }

@@ -46,6 +46,7 @@ fun PanelScreen(vm: PanelViewModel, onVerAlerta: () -> Unit) {
     val porEstado by vm.porEstado.collectAsStateWithLifecycle()
     val porCategoria by vm.porCategoria.collectAsStateWithLifecycle()
     val altas by vm.altasSinAtender.collectAsStateWithLifecycle()
+    val tiempoPromedio by vm.tiempoPromedioResolucion.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -72,6 +73,20 @@ fun PanelScreen(vm: PanelViewModel, onVerAlerta: () -> Unit) {
             Contador(abiertos, "Abiertos", colorEstado(EstadoTicket.ABIERTO), Modifier.weight(1f))
             Contador(enProceso, "En proceso", colorEstado(EstadoTicket.EN_PROCESO), Modifier.weight(1f))
             Contador(resueltos, "Resueltos", colorEstado(EstadoTicket.RESUELTO), Modifier.weight(1f))
+        }
+
+        // Tiempo promedio de resolución
+        Tarjeta {
+            Text(
+                "Tiempo promedio de resolución",
+                style = MaterialTheme.typography.titleMedium
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                tiempoPromedio,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
 
         // Dona: tickets por estado

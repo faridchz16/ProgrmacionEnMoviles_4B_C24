@@ -109,4 +109,7 @@ class AyudaRepositoryRoom(private val db: AyudaDatabase) : AyudaRepository {
 
     override fun observarAltasSinAtender(limite: Long): Flow<Int> =
         ticketDao.contarAltasSinAtender(limite)
+
+    override fun observarTiempoPromedioResolucion(): Flow<Double?> =
+        ticketDao.observarTiempoPromedioResolucion()
 }
