@@ -50,6 +50,10 @@ import com.faridchavez.ayudacampus.ui.cliente.NuevoTicketScreen
 import com.faridchavez.ayudacampus.viewmodel.NuevoTicketViewModel
 import com.faridchavez.ayudacampus.ui.cliente.DetalleTicketScreen
 import com.faridchavez.ayudacampus.viewmodel.TicketDetalleViewModel
+import com.faridchavez.ayudacampus.ui.soporte.BandejaScreen
+import com.faridchavez.ayudacampus.ui.soporte.PanelScreen
+import com.faridchavez.ayudacampus.viewmodel.BandejaViewModel
+import com.faridchavez.ayudacampus.viewmodel.PanelViewModel
 
 @Composable
 fun NavAyuda() {
@@ -144,8 +148,20 @@ fun NavAyuda() {
 
                 // ---------------- Soporte TI ----------------
                 navigation(startDestination = Rutas.PANEL, route = Rutas.GRAFO_SOPORTE) {
-                    composable(Rutas.PANEL) { EnConstruccion("Panel de soporte", "Paso 10") }
-                    composable(Rutas.BANDEJA) { EnConstruccion("Bandeja de tickets", "Paso 10") }
+                    composable(Rutas.PANEL) {
+                        val vm = ayudaViewModel { app -> PanelViewModel(app.repository) }
+                        PanelScreen(
+                            vm = vm,
+                            onVerAlerta = { nav.irA(Rutas.BANDEJA, Rutas.PANEL) }
+                        )
+                    }
+                    composable(Rutas.BANDEJA) {
+                        val vm = ayudaViewModel { app -> BandejaViewModel(app.repository) }
+                        BandejaScreen(
+                            vm = vm,
+                            onAtender = { id -> nav.navigate(Rutas.atenderTicket(id)) }
+                        )
+                    }
                     composable(
                         Rutas.ATENDER_TICKET,
                         arguments = listOf(navArgument("id") { type = NavType.IntType })
