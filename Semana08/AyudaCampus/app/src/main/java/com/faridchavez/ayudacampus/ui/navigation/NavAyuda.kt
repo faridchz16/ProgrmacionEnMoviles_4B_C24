@@ -1,11 +1,9 @@
 package com.faridchavez.ayudacampus.ui.navigation
 
-import androidx.compose.foundation.layout.Box
+import android.app.Activity
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
@@ -22,11 +20,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -37,26 +36,28 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.faridchavez.ayudacampus.model.Rol
-import com.faridchavez.ayudacampus.ui.cliente.LoginScreen
-import com.faridchavez.ayudacampus.ui.cliente.SplashScreen
-import com.faridchavez.ayudacampus.ui.soporte.CategoriasScreen
-import com.faridchavez.ayudacampus.ui.theme.AyudaTheme
-import com.faridchavez.ayudacampus.viewmodel.CategoriasViewModel
-import com.faridchavez.ayudacampus.viewmodel.SesionViewModel
-import com.faridchavez.ayudacampus.viewmodel.ayudaViewModel
-import com.faridchavez.ayudacampus.ui.cliente.MisTicketsScreen
-import com.faridchavez.ayudacampus.viewmodel.MisTicketsViewModel
-import com.faridchavez.ayudacampus.ui.cliente.NuevoTicketScreen
-import com.faridchavez.ayudacampus.viewmodel.NuevoTicketViewModel
 import com.faridchavez.ayudacampus.ui.cliente.DetalleTicketScreen
-import com.faridchavez.ayudacampus.viewmodel.TicketDetalleViewModel
-import com.faridchavez.ayudacampus.ui.soporte.BandejaScreen
-import com.faridchavez.ayudacampus.ui.soporte.PanelScreen
-import com.faridchavez.ayudacampus.viewmodel.BandejaViewModel
-import com.faridchavez.ayudacampus.viewmodel.PanelViewModel
+import com.faridchavez.ayudacampus.ui.cliente.LoginScreen
+import com.faridchavez.ayudacampus.ui.cliente.MisTicketsScreen
+import com.faridchavez.ayudacampus.ui.cliente.NuevoTicketScreen
+import com.faridchavez.ayudacampus.ui.cliente.PerfilScreen
+import com.faridchavez.ayudacampus.ui.cliente.SplashScreen
+import com.faridchavez.ayudacampus.ui.soporte.AjustesScreen
 import com.faridchavez.ayudacampus.ui.soporte.AtenderTicketScreen
+import com.faridchavez.ayudacampus.ui.soporte.BandejaScreen
+import com.faridchavez.ayudacampus.ui.soporte.CategoriasScreen
 import com.faridchavez.ayudacampus.ui.soporte.FormularioCategoriaScreen
+import com.faridchavez.ayudacampus.ui.soporte.PanelScreen
+import com.faridchavez.ayudacampus.ui.theme.AyudaTheme
 import com.faridchavez.ayudacampus.viewmodel.AtenderViewModel
+import com.faridchavez.ayudacampus.viewmodel.BandejaViewModel
+import com.faridchavez.ayudacampus.viewmodel.CategoriasViewModel
+import com.faridchavez.ayudacampus.viewmodel.MisTicketsViewModel
+import com.faridchavez.ayudacampus.viewmodel.NuevoTicketViewModel
+import com.faridchavez.ayudacampus.viewmodel.PanelViewModel
+import com.faridchavez.ayudacampus.viewmodel.SesionViewModel
+import com.faridchavez.ayudacampus.viewmodel.TicketDetalleViewModel
+import com.faridchavez.ayudacampus.viewmodel.ayudaViewModel
 
 @Composable
 fun NavAyuda() {
@@ -72,6 +73,18 @@ fun NavAyuda() {
     val ruta = entrada?.destination?.route
     val enCliente = ruta?.startsWith(Rutas.GRAFO_CLIENTE) == true
     val enSoporte = ruta?.startsWith(Rutas.GRAFO_SOPORTE) == true
+
+    // Íconos de la barra de estado claros u oscuros según el modo oscuro de la app
+    val vista = LocalView.current
+    if (!vista.isInEditMode) {
+        SideEffect {
+            val ventana = (vista.context as Activity).window
+            WindowCompat.getInsetsController(ventana, vista).apply {
+                isAppearanceLightStatusBars = !oscuro
+                isAppearanceLightNavigationBars = !oscuro
+            }
+        }
+    }
 
     // Navega según la sesión: entrar (o saltar el login), cambiar de perfil o cerrar sesión
     LaunchedEffect(usuario, cargando, ruta) {
@@ -128,7 +141,7 @@ fun NavAyuda() {
                     composable(Rutas.NUEVO_TICKET) {
                         val u = usuario ?: return@composable
                         val vm = ayudaViewModel(clave = "nuevo-${u.id}") { app ->
-                            NuevoTicketViewModel(app.repository, u)
+                            NuevoTicketViewModel(app.repository, u, app.preferencias.recibirTickets)
                         }
                         NuevoTicketScreen(
                             vm = vm,
@@ -147,6 +160,7 @@ fun NavAyuda() {
                         }
                         DetalleTicketScreen(vm = vm, onAtras = { nav.popBackStack() })
                     }
+                    composable(Rutas.PERFIL) { PerfilScreen(vm = sesion) }
                 }
 
                 // ---------------- Soporte TI ----------------
@@ -199,7 +213,7 @@ fun NavAyuda() {
                             onVolver = { nav.popBackStack() }
                         )
                     }
-                    composable(Rutas.AJUSTES) { EnConstruccion("Ajustes", "Paso 12") }
+                    composable(Rutas.AJUSTES) { AjustesScreen(vm = sesion) }
                 }
             }
         }
@@ -269,21 +283,4 @@ private fun RowScope.ItemBarra(
             indicatorColor = MaterialTheme.colorScheme.primaryContainer
         )
     )
-}
-
-
-@Composable
-private fun EnConstruccion(titulo: String, paso: String) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-    ) {
-        Text(
-            "$titulo\n(se construye en el $paso)",
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleMedium
-        )
-    }
 }

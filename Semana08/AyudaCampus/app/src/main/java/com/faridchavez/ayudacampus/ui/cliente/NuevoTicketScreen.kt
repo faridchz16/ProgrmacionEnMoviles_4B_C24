@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Card
@@ -54,6 +55,7 @@ fun NuevoTicketScreen(
     val categorias by vm.categorias.collectAsStateWithLifecycle()
     val f by vm.formulario.collectAsStateWithLifecycle()
     val enviado by vm.enviado.collectAsStateWithLifecycle()
+    val mesaAbierta by vm.mesaAbierta.collectAsStateWithLifecycle()
 
     LaunchedEffect(enviado) {
         if (enviado) {
@@ -74,6 +76,11 @@ fun NuevoTicketScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+            if (!mesaAbierta) {
+                AvisoMesaCerrada()
+                Spacer(Modifier.height(12.dp))
+            }
+
             // Categoría (solo activas)
             Text("Categoría", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(8.dp))
@@ -160,8 +167,40 @@ fun NuevoTicketScreen(
             }
             Spacer(Modifier.height(16.dp))
 
-            AyudaButton("Enviar ticket", onClick = vm::enviar, habilitado = !f.enviando)
+            AyudaButton(
+                "Enviar ticket",
+                onClick = vm::enviar,
+                habilitado = mesaAbierta && !f.enviando
+            )
             Spacer(Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun AvisoMesaCerrada() {
+    Card(
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(14.dp)) {
+            Icon(Icons.Outlined.Block, null, tint = MaterialTheme.colorScheme.error)
+            Spacer(Modifier.width(10.dp))
+            Column {
+                Text(
+                    "Mesa de ayuda cerrada",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Text(
+                    "Soporte TI no está recibiendo tickets por ahora. Intenta más tarde.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }

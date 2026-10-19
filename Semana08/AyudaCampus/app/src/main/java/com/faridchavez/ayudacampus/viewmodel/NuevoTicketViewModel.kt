@@ -6,6 +6,7 @@ import com.faridchavez.ayudacampus.data.local.entity.Categoria
 import com.faridchavez.ayudacampus.data.local.entity.Usuario
 import com.faridchavez.ayudacampus.data.repository.AyudaRepository
 import com.faridchavez.ayudacampus.model.Prioridad
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,8 +29,12 @@ data class FormularioTicket(
 
 class NuevoTicketViewModel(
     private val repo: AyudaRepository,
-    private val usuario: Usuario
+    private val usuario: Usuario,
+    recibirTickets: Flow<Boolean>
 ) : ViewModel() {
+
+    val mesaAbierta: StateFlow<Boolean> = recibirTickets
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
     val categorias: StateFlow<List<Categoria>> = repo.observarCategoriasActivas()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -57,7 +62,7 @@ class NuevoTicketViewModel(
 
     fun enviar() {
         val f = _formulario.value
-        if (f.enviando) return
+        if (f.enviando || !mesaAbierta.value) return
 
         val categoriaId = f.categoriaId
         val activas = categorias.value.map { it.id }
