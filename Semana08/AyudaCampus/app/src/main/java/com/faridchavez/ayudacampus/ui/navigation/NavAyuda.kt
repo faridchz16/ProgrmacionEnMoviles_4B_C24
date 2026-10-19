@@ -54,6 +54,9 @@ import com.faridchavez.ayudacampus.ui.soporte.BandejaScreen
 import com.faridchavez.ayudacampus.ui.soporte.PanelScreen
 import com.faridchavez.ayudacampus.viewmodel.BandejaViewModel
 import com.faridchavez.ayudacampus.viewmodel.PanelViewModel
+import com.faridchavez.ayudacampus.ui.soporte.AtenderTicketScreen
+import com.faridchavez.ayudacampus.ui.soporte.FormularioCategoriaScreen
+import com.faridchavez.ayudacampus.viewmodel.AtenderViewModel
 
 @Composable
 fun NavAyuda() {
@@ -165,10 +168,21 @@ fun NavAyuda() {
                     composable(
                         Rutas.ATENDER_TICKET,
                         arguments = listOf(navArgument("id") { type = NavType.IntType })
-                    ) { EnConstruccion("Atender ticket", "Paso 11") }
+                    ) { entrada ->
+                        val u = usuario ?: return@composable
+                        val id = entrada.arguments?.getInt("id") ?: return@composable
+                        val vm = ayudaViewModel(clave = "atender-$id-${u.id}") { app ->
+                            AtenderViewModel(app.repository, id, u)
+                        }
+                        AtenderTicketScreen(vm = vm, onAtras = { nav.popBackStack() })
+                    }
                     composable(Rutas.CATEGORIAS) {
                         val vm = ayudaViewModel { app -> CategoriasViewModel(app.repository) }
-                        CategoriasScreen(vm = vm, onEditar = { })
+                        CategoriasScreen(
+                            vm = vm,
+                            onEditar = { id -> nav.navigate(Rutas.formCategoria(id)) },
+                            onNueva = { nav.navigate(Rutas.formCategoria()) }
+                        )
                     }
                     composable(
                         Rutas.FORM_CATEGORIA,
@@ -176,7 +190,15 @@ fun NavAyuda() {
                             type = NavType.IntType
                             defaultValue = -1
                         })
-                    ) { EnConstruccion("Formulario de categoría", "Paso 11") }
+                    ) { entrada ->
+                        val id = entrada.arguments?.getInt("id")?.takeIf { it > 0 }
+                        val vm = ayudaViewModel { app -> CategoriasViewModel(app.repository) }
+                        FormularioCategoriaScreen(
+                            vm = vm,
+                            id = id,
+                            onVolver = { nav.popBackStack() }
+                        )
+                    }
                     composable(Rutas.AJUSTES) { EnConstruccion("Ajustes", "Paso 12") }
                 }
             }
