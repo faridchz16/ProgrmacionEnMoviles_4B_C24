@@ -20,7 +20,6 @@ class AyudaApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Siembra los datos de prueba la primera vez, fuera del hilo principal
         appScope.launch { DatosIniciales.sembrar(database) }
     }
 }
