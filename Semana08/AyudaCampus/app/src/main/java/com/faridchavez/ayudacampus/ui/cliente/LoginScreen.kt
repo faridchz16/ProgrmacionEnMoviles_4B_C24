@@ -1,6 +1,8 @@
 package com.faridchavez.ayudacampus.ui.cliente
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,7 +41,12 @@ import com.faridchavez.ayudacampus.ui.theme.AyudaTheme
 import com.faridchavez.ayudacampus.viewmodel.SesionViewModel
 
 @Composable
-fun LoginScreen(vm: SesionViewModel, oscuro: Boolean) {
+fun LoginScreen(
+    vm: SesionViewModel,
+    oscuro: Boolean,
+    onOlvidaste: () -> Unit,
+    onRegistrarse: () -> Unit
+) {
     var rol by rememberSaveable { mutableStateOf(Rol.CLIENTE) }
     var correo by rememberSaveable { mutableStateOf("") }
     var clave by rememberSaveable { mutableStateOf("") }
@@ -96,7 +103,7 @@ fun LoginScreen(vm: SesionViewModel, oscuro: Boolean) {
                     icono = Icons.Outlined.Lock,
                     esClave = true
                 )
-                TextButton(onClick = { }, modifier = Modifier.align(Alignment.End)) {
+                TextButton(onClick = onOlvidaste, modifier = Modifier.align(Alignment.End)) {
                     Text("¿Olvidaste tu contraseña?")
                 }
 
@@ -113,13 +120,20 @@ fun LoginScreen(vm: SesionViewModel, oscuro: Boolean) {
                 Spacer(Modifier.height(16.dp))
 
                 if (rol == Rol.CLIENTE) {
-                    Text(
-                        "¿No tienes cuenta?  Regístrate",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.titleSmall,
-                        textAlign = TextAlign.Center,
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
-                    )
+                    ) {
+                        Text(
+                            "¿No tienes cuenta?",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        TextButton(onClick = onRegistrarse) {
+                            Text("Regístrate", style = MaterialTheme.typography.titleSmall)
+                        }
+                    }
                 } else {
                     Card(
                         shape = RoundedCornerShape(14.dp),

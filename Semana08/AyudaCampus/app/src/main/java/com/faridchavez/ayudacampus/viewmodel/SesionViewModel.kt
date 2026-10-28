@@ -86,7 +86,7 @@ class SesionViewModel(
     }
 
     fun login(correo: String, clave: String, rolSeleccionado: Rol) {
-        val correoLimpio = correo.trim()
+        val correoLimpio = correo.trim().lowercase()
         if (correoLimpio.isEmpty() || clave.isEmpty()) {
             _error.value = "Ingresa tu correo y tu contraseña"
             return
@@ -114,11 +114,24 @@ class SesionViewModel(
         _error.value = null
     }
 
-    fun cambiarPerfil() {
-        val actual = Rol.desde(_usuarioActual.value?.rol) ?: return
+    fun iniciarSesion(usuario: Usuario) {
+        val rol = Rol.desde(usuario.rol) ?: return
         viewModelScope.launch {
+            prefs.guardarSesion(rol, usuario.id)
+            _error.value = null
+            _usuarioActual.value = usuario
+        }
+    }
+
+    private val ultimoPorRol = mutableMapOf<Rol, Usuario>()
+
+    fun cambiarPerfil() {
+        val usuario = _usuarioActual.value ?: return
+        val actual = Rol.desde(usuario.rol) ?: return
+        viewModelScope.launch {
+            ultimoPorRol[actual] = usuario
             val otroRol = actual.otro()
-            val otro = repo.primerUsuarioConRol(otroRol) ?: return@launch
+            val otro = ultimoPorRol[otroRol] ?: repo.primerUsuarioConRol(otroRol) ?: return@launch
             prefs.guardarSesion(otroRol, otro.id)
             _usuarioActual.value = otro
         }

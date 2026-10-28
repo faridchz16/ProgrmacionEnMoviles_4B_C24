@@ -58,6 +58,10 @@ import com.faridchavez.ayudacampus.viewmodel.PanelViewModel
 import com.faridchavez.ayudacampus.viewmodel.SesionViewModel
 import com.faridchavez.ayudacampus.viewmodel.TicketDetalleViewModel
 import com.faridchavez.ayudacampus.viewmodel.ayudaViewModel
+import com.faridchavez.ayudacampus.ui.cliente.RecuperarClaveScreen
+import com.faridchavez.ayudacampus.ui.cliente.RegistroScreen
+import com.faridchavez.ayudacampus.viewmodel.RecuperarClaveViewModel
+import com.faridchavez.ayudacampus.viewmodel.RegistroViewModel
 
 @Composable
 fun NavAyuda() {
@@ -122,7 +126,27 @@ fun NavAyuda() {
                 }
 
                 composable(Rutas.LOGIN) {
-                    LoginScreen(vm = sesion, oscuro = oscuro)
+                    LoginScreen(
+                        vm = sesion,
+                        oscuro = oscuro,
+                        onOlvidaste = { nav.navigate(Rutas.RECUPERAR) },
+                        onRegistrarse = { nav.navigate(Rutas.REGISTRO) }
+                    )
+                }
+
+                composable(Rutas.REGISTRO) {
+                    val vm = ayudaViewModel { app -> RegistroViewModel(app.repository) }
+                    RegistroScreen(
+                        vm = vm,
+                        onAtras = { nav.popBackStack() },
+                        // La sesión cambia → el LaunchedEffect de arriba navega a Mis tickets
+                        onRegistrado = { usuario -> sesion.iniciarSesion(usuario) }
+                    )
+                }
+
+                composable(Rutas.RECUPERAR) {
+                    val vm = ayudaViewModel { app -> RecuperarClaveViewModel(app.repository) }
+                    RecuperarClaveScreen(vm = vm, onVolver = { nav.popBackStack() })
                 }
 
                 // ---------------- Estudiante ----------------

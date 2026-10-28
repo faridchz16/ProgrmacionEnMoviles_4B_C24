@@ -4,6 +4,8 @@ object Rutas {
     // Comunes
     const val SPLASH = "splash"
     const val LOGIN = "login"
+    const val REGISTRO = "registro"
+    const val RECUPERAR = "recuperar"
 
     // Grafo del estudiante (CLIENTE)
     const val GRAFO_CLIENTE = "cliente"

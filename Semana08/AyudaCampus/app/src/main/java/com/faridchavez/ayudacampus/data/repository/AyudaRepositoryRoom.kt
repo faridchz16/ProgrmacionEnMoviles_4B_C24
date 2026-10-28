@@ -27,6 +27,18 @@ class AyudaRepositoryRoom(private val db: AyudaDatabase) : AyudaRepository {
     override suspend fun primerUsuarioConRol(rol: Rol): Usuario? =
         usuarioDao.primeroConRol(rol.name)
 
+    override suspend fun buscarUsuarioPorCorreo(correo: String): Usuario? =
+        usuarioDao.buscarPorCorreo(correo)
+
+    override suspend fun registrarEstudiante(nombre: String, correo: String, clave: String): Usuario {
+        val nuevo = Usuario(nombre = nombre, correo = correo, clave = clave, rol = Rol.CLIENTE.name)
+        val id = usuarioDao.insertar(nuevo)
+        return nuevo.copy(id = id.toInt())
+    }
+
+    override suspend fun cambiarClave(usuarioId: Int, nuevaClave: String) =
+        usuarioDao.actualizarClave(usuarioId, nuevaClave)
+
     // ---------- Categorías ----------
     override fun observarCategorias(): Flow<List<Categoria>> = categoriaDao.observarTodas()
 

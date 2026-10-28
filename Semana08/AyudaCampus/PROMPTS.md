@@ -42,6 +42,23 @@ Fase 2 · rama `mejora-ia` · Asistente: Gemini en Android Studio.
 
 **¿Respeta MVVM?:** Sí, en lo principal: los filtros y la lista filtrada viven en el ViewModel y este solo conoce `AyudaRepository`. La IA dejó algo de lógica en la View, que corregí.
 
+## Prompt 4 · Registro de estudiante
+
+**Texto enviado a Gemini:**
+> En la misma app (Compose + Material 3 + MVVM + Room), agrega el registro de estudiante: una pantalla RegistroScreen con nombre, correo, contraseña y confirmación. Las validaciones van en un RegistroViewModel (nombre minimo 3 caracteres, correo valido y UNICO, contraseña minimo 4 y que coincidan). El correo unico se verifica con una consulta en UsuarioDao a traves de AyudaRepository. Al registrarse se crea un usuario con rol CLIENTE y entra directo a Mis tickets. Los errores se muestran junto a cada campo. No uses XML. Muestrame solo los archivos que cambian.
+
+**Qué generó la IA:** Se ejecutó en modo Agent y modificó los archivos directamente. Agregó `buscarPorCorreo` en `UsuarioDao`, `buscarUsuarioPorCorreo` y `registrarUsuario(nombre, correo, clave, rol)` en el repositorio, un `RegistroViewModel` con las validaciones y un error por campo, `RegistroScreen`, la ruta `REGISTRO`, el enlace "Regístrate" en el login y una función `iniciarSesionDirecta` en `SesionViewModel`.
+
+**Qué tuve que corregir yo:**
+- `RegistroViewModel` recibía `SesionViewModel` en su constructor: un ViewModel dependía de otro. Lo cambié para que solo conozca el Repository y exponga el usuario registrado; la navegación es la que avisa a la sesión.
+- `registrarUsuario` recibía el rol como parámetro, lo que permitiría crear cuentas de Soporte. Lo reemplacé por `registrarEstudiante`, que siempre crea rol CLIENTE.
+- No pasaba el correo a minúsculas, así que se podía registrar "Juan@campus.test" aunque ya existiera "juan@campus.test". Ahora el correo se normaliza (también en el login).
+- Usaba `android.util.Patterns` en el ViewModel; lo cambié por un `Regex` de Kotlin para no depender de Android.
+
+**¿Respeta MVVM?:** Parcialmente. La consulta del correo único estaba en el DAO y las validaciones en el ViewModel, pero un ViewModel dependía de otro ViewModel. La versión final sí lo respeta.
+
+Además, agregué manualmente (sin IA) el botón para mostrar u ocultar la contraseña y la pantalla "¿Olvidaste tu contraseña?".
+
 ## Reflexión (5 líneas)
 - ¿Qué mejoró la IA y qué no?
 La IA acertó al ubicar cada pieza en su capa (consulta en el DAO, Flow en el Repository, StateFlow en el ViewModel) y usó bien combine y stateIn, pero no reutilizó lo que ya existía (Prioridad.horasRespuesta, el formateo del tiempo).

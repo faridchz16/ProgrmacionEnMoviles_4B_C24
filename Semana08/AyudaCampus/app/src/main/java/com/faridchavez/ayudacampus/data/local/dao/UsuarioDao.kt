@@ -25,4 +25,10 @@ interface UsuarioDao {
 
     @Query("SELECT COUNT(*) FROM usuarios")
     suspend fun contar(): Int
+
+    @Query("SELECT * FROM usuarios WHERE correo = :correo LIMIT 1")
+    suspend fun buscarPorCorreo(correo: String): Usuario?
+
+    @Query("UPDATE usuarios SET clave = :clave WHERE id = :id")
+    suspend fun actualizarClave(id: Int, clave: String)
 }
