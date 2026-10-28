@@ -83,4 +83,7 @@ interface TicketDao {
                 "WHERE estado = 'CERRADO' AND fechaCierre IS NOT NULL"
     )
     fun observarTiempoPromedioResolucion(): Flow<Double?>
+
+    @Query("SELECT clienteId FROM tickets WHERE id = :id")
+    suspend fun clienteDe(id: Int): Int?
 }

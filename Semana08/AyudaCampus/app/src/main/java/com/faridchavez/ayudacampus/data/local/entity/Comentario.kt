@@ -24,5 +24,6 @@ data class Comentario(
     val autorNombre: String,
     val autorRol: String,
     val texto: String,
-    val fecha: Long = System.currentTimeMillis()
+    val fecha: Long = System.currentTimeMillis(),
+    val interno: Boolean = false
 )

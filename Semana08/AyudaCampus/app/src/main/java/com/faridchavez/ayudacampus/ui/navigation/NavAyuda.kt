@@ -41,7 +41,10 @@ import com.faridchavez.ayudacampus.ui.cliente.LoginScreen
 import com.faridchavez.ayudacampus.ui.cliente.MisTicketsScreen
 import com.faridchavez.ayudacampus.ui.cliente.NuevoTicketScreen
 import com.faridchavez.ayudacampus.ui.cliente.PerfilScreen
+import com.faridchavez.ayudacampus.ui.cliente.RecuperarClaveScreen
+import com.faridchavez.ayudacampus.ui.cliente.RegistroScreen
 import com.faridchavez.ayudacampus.ui.cliente.SplashScreen
+import com.faridchavez.ayudacampus.ui.comun.NotificacionesScreen
 import com.faridchavez.ayudacampus.ui.soporte.AjustesScreen
 import com.faridchavez.ayudacampus.ui.soporte.AtenderTicketScreen
 import com.faridchavez.ayudacampus.ui.soporte.BandejaScreen
@@ -53,15 +56,14 @@ import com.faridchavez.ayudacampus.viewmodel.AtenderViewModel
 import com.faridchavez.ayudacampus.viewmodel.BandejaViewModel
 import com.faridchavez.ayudacampus.viewmodel.CategoriasViewModel
 import com.faridchavez.ayudacampus.viewmodel.MisTicketsViewModel
+import com.faridchavez.ayudacampus.viewmodel.NotificacionesViewModel
 import com.faridchavez.ayudacampus.viewmodel.NuevoTicketViewModel
 import com.faridchavez.ayudacampus.viewmodel.PanelViewModel
+import com.faridchavez.ayudacampus.viewmodel.RecuperarClaveViewModel
+import com.faridchavez.ayudacampus.viewmodel.RegistroViewModel
 import com.faridchavez.ayudacampus.viewmodel.SesionViewModel
 import com.faridchavez.ayudacampus.viewmodel.TicketDetalleViewModel
 import com.faridchavez.ayudacampus.viewmodel.ayudaViewModel
-import com.faridchavez.ayudacampus.ui.cliente.RecuperarClaveScreen
-import com.faridchavez.ayudacampus.ui.cliente.RegistroScreen
-import com.faridchavez.ayudacampus.viewmodel.RecuperarClaveViewModel
-import com.faridchavez.ayudacampus.viewmodel.RegistroViewModel
 
 @Composable
 fun NavAyuda() {
@@ -72,6 +74,12 @@ fun NavAyuda() {
     val usuario by sesion.usuarioActual.collectAsStateWithLifecycle()
     val cargando by sesion.cargando.collectAsStateWithLifecycle()
     val oscuro by sesion.modoOscuro.collectAsStateWithLifecycle()
+
+    // Avisos del usuario activo: contador de la campanita y lista de notificaciones
+    val notifVm = usuario?.let { u ->
+        ayudaViewModel(clave = "notif-${u.id}") { app -> NotificacionesViewModel(app.repository, u) }
+    }
+    val noLeidas = notifVm?.noLeidas?.collectAsStateWithLifecycle()?.value ?: 0
 
     val entrada by nav.currentBackStackEntryAsState()
     val ruta = entrada?.destination?.route
@@ -159,7 +167,9 @@ fun NavAyuda() {
                         MisTicketsScreen(
                             vm = vm,
                             onAbrir = { id -> nav.navigate(Rutas.detalleTicket(id)) },
-                            onNuevo = { nav.irA(Rutas.NUEVO_TICKET, Rutas.MIS_TICKETS) }
+                            onNuevo = { nav.irA(Rutas.NUEVO_TICKET, Rutas.MIS_TICKETS) },
+                            noLeidas = noLeidas,                                          // ← nuevo
+                            onNotificaciones = { nav.navigate(Rutas.NOTIF_CLIENTE) }      // ← nuevo
                         )
                     }
                     composable(Rutas.NUEVO_TICKET) {
@@ -185,6 +195,15 @@ fun NavAyuda() {
                         DetalleTicketScreen(vm = vm, onAtras = { nav.popBackStack() })
                     }
                     composable(Rutas.PERFIL) { PerfilScreen(vm = sesion) }
+                    // ← nuevo: avisos del estudiante (tocar uno abre el detalle del ticket)
+                    composable(Rutas.NOTIF_CLIENTE) {
+                        val vm = notifVm ?: return@composable
+                        NotificacionesScreen(
+                            vm = vm,
+                            onAtras = { nav.popBackStack() },
+                            onAbrirTicket = { id -> nav.navigate(Rutas.detalleTicket(id)) }
+                        )
+                    }
                 }
 
                 // ---------------- Soporte TI ----------------
@@ -193,7 +212,9 @@ fun NavAyuda() {
                         val vm = ayudaViewModel { app -> PanelViewModel(app.repository) }
                         PanelScreen(
                             vm = vm,
-                            onVerAlerta = { nav.irA(Rutas.BANDEJA, Rutas.PANEL) }
+                            onVerAlerta = { nav.irA(Rutas.BANDEJA, Rutas.PANEL) },
+                            noLeidas = noLeidas,                                          // ← nuevo
+                            onNotificaciones = { nav.navigate(Rutas.NOTIF_SOPORTE) }      // ← nuevo
                         )
                     }
                     composable(Rutas.BANDEJA) {
@@ -238,6 +259,15 @@ fun NavAyuda() {
                         )
                     }
                     composable(Rutas.AJUSTES) { AjustesScreen(vm = sesion) }
+                    // ← nuevo: avisos de Soporte (tocar uno abre "Atender ticket")
+                    composable(Rutas.NOTIF_SOPORTE) {
+                        val vm = notifVm ?: return@composable
+                        NotificacionesScreen(
+                            vm = vm,
+                            onAtras = { nav.popBackStack() },
+                            onAbrirTicket = { id -> nav.navigate(Rutas.atenderTicket(id)) }
+                        )
+                    }
                 }
             }
         }
@@ -245,7 +275,6 @@ fun NavAyuda() {
 }
 
 // ---------------- NavigationBar ----------------
-
 private fun NavHostController.irA(ruta: String, inicio: String) {
     navigate(ruta) {
         popUpTo(inicio)

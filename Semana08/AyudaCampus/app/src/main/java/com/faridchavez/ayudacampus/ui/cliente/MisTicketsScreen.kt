@@ -42,6 +42,7 @@ import com.faridchavez.ayudacampus.ui.components.EstadoVacio
 import com.faridchavez.ayudacampus.ui.components.TicketCard
 import com.faridchavez.ayudacampus.ui.components.numeroTicket
 import com.faridchavez.ayudacampus.viewmodel.MisTicketsViewModel
+import com.faridchavez.ayudacampus.ui.components.CampanaNotificaciones
 
 private val FILTROS = listOf(
     null to "Todos",
@@ -55,7 +56,9 @@ private val FILTROS = listOf(
 fun MisTicketsScreen(
     vm: MisTicketsViewModel,
     onAbrir: (Int) -> Unit,
-    onNuevo: () -> Unit
+    onNuevo: () -> Unit,
+    noLeidas: Int = 0,
+    onNotificaciones: () -> Unit = {}
 ) {
     val tickets by vm.tickets.collectAsStateWithLifecycle()
     val filtro by vm.filtro.collectAsStateWithLifecycle()
@@ -94,7 +97,7 @@ fun MisTicketsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                Icon(Icons.Outlined.Notifications, contentDescription = "Notificaciones")
+                CampanaNotificaciones(noLeidas = noLeidas, onClick = onNotificaciones)
             }
 
             // Buscador

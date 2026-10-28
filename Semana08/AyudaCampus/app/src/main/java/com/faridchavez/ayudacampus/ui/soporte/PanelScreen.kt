@@ -37,9 +37,15 @@ import com.faridchavez.ayudacampus.ui.components.graficos.GraficoBarras
 import com.faridchavez.ayudacampus.ui.components.graficos.GraficoDona
 import com.faridchavez.ayudacampus.ui.theme.colorEstado
 import com.faridchavez.ayudacampus.viewmodel.PanelViewModel
+import com.faridchavez.ayudacampus.ui.components.CampanaNotificaciones
 
 @Composable
-fun PanelScreen(vm: PanelViewModel, onVerAlerta: () -> Unit) {
+fun PanelScreen(
+    vm: PanelViewModel,
+    onVerAlerta: () -> Unit,
+    noLeidas: Int = 0,
+    onNotificaciones: () -> Unit = {}
+) {
     val abiertos by vm.abiertos.collectAsStateWithLifecycle()
     val enProceso by vm.enProceso.collectAsStateWithLifecycle()
     val resueltos by vm.resueltos.collectAsStateWithLifecycle()
@@ -65,7 +71,7 @@ fun PanelScreen(vm: PanelViewModel, onVerAlerta: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Icon(Icons.Outlined.Notifications, contentDescription = "Notificaciones")
+            CampanaNotificaciones(noLeidas = noLeidas, onClick = onNotificaciones)
         }
 
         // 3 contadores de color

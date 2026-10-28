@@ -28,6 +28,7 @@ class AtenderViewModel(
 
     private val _estadoElegido = MutableStateFlow<EstadoTicket?>(null)
     private val _prioridadElegida = MutableStateFlow<Prioridad?>(null)
+    private val _esNotaInterna = MutableStateFlow(false)
 
     val estadoSeleccionado: StateFlow<EstadoTicket?> =
         combine(ticket, _estadoElegido) { t, elegido -> elegido ?: t?.estado }
@@ -36,6 +37,8 @@ class AtenderViewModel(
     val prioridadSeleccionada: StateFlow<Prioridad?> =
         combine(ticket, _prioridadElegida) { t, elegida -> elegida ?: t?.prioridad }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val esNotaInterna: StateFlow<Boolean> = _esNotaInterna.asStateFlow()
 
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
@@ -65,9 +68,22 @@ class AtenderViewModel(
         _prioridadElegida.value = prioridad
     }
 
+    fun cambiarEsNotaInterna(esInterno: Boolean) {
+        _esNotaInterna.value = esInterno
+    }
+
     fun responder(texto: String) {
         if (ticket.value == null || texto.isBlank() || estaCerrado()) return
-        viewModelScope.launch { repo.agregarComentario(ticketId, usuario, texto.trim()) }
+        val esInterno = _esNotaInterna.value
+        viewModelScope.launch {
+            repo.agregarComentario(
+                ticketId = ticketId,
+                autor = usuario,
+                texto = texto.trim(),
+                interno = esInterno
+            )
+            _esNotaInterna.value = false
+        }
     }
 
     fun guardar() {

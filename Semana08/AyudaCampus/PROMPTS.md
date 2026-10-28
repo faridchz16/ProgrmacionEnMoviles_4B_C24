@@ -59,6 +59,17 @@ Fase 2 · rama `mejora-ia` · Asistente: Gemini en Android Studio.
 
 Además, agregué manualmente (sin IA) el botón para mostrar u ocultar la contraseña y la pantalla "¿Olvidaste tu contraseña?".
 
+## Prompt 5 · Comentarios internos
+
+**Texto enviado a Gemini:**
+> En la misma app (Compose + Material 3 + MVVM + Room), agrega comentarios internos: Soporte puede escribir notas internas en un ticket que el estudiante NO ve. Agrega un campo interno: Boolean a la entidad Comentario (sube la version de la base), un parametro interno en agregarComentario del AyudaRepository y su implementacion, y en AtenderViewModel un StateFlow para elegir si el siguiente comentario es nota interna. La regla de visibilidad va en el ViewModel: TicketDetalleViewModel (estudiante) debe filtrar las notas internas. En AtenderTicketScreen agrega un FilterChip "Nota interna" y muestra las notas internas con un estilo distinto. No uses XML. Muestrame solo los archivos que cambian.
+
+**Qué generó la IA:** Gemini (modo Ask) agregó el campo `interno` a `Comentario` y subió la base a la versión 3, el parámetro `interno` con valor por defecto en `agregarComentario`, el filtro de notas internas en `TicketDetalleViewModel`, un `StateFlow` `esNotaInterna` en `AtenderViewModel`, un `FilterChip` "🔒 Nota interna" en `AtenderTicketScreen` y un estilo ámbar en `BurbujaComentario`.
+
+**Qué tuve que corregir yo:** El repositorio guardaba la nota interna sin validar el rol del autor; agregué la regla para que solo Soporte (ADMIN) pueda crearla. También noté que usaba colores fijos en vez de los del tema y que el chip se desactivaba después de cada envío, lo que podía hacer pública una segunda nota sin querer.
+
+**¿Respeta MVVM?:** Sí. La regla de visibilidad está en el ViewModel del estudiante (la pantalla no sabe que existen notas internas), la regla del rol está en el repositorio y la View solo muestra el chip y el estilo distinto.
+
 ## Reflexión (5 líneas)
 - ¿Qué mejoró la IA y qué no?
 La IA acertó al ubicar cada pieza en su capa (consulta en el DAO, Flow en el Repository, StateFlow en el ViewModel) y usó bien combine y stateIn, pero no reutilizó lo que ya existía (Prioridad.horasRespuesta, el formateo del tiempo).

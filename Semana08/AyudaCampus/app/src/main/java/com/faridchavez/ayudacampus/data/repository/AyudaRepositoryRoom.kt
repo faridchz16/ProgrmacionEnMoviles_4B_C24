@@ -3,6 +3,7 @@ package com.faridchavez.ayudacampus.data.repository
 import com.faridchavez.ayudacampus.data.local.AyudaDatabase
 import com.faridchavez.ayudacampus.data.local.entity.Categoria
 import com.faridchavez.ayudacampus.data.local.entity.Comentario
+import com.faridchavez.ayudacampus.data.local.entity.Notificacion
 import com.faridchavez.ayudacampus.data.local.entity.Ticket
 import com.faridchavez.ayudacampus.data.local.entity.Usuario
 import com.faridchavez.ayudacampus.data.local.relation.TicketConDetalle
@@ -17,6 +18,7 @@ class AyudaRepositoryRoom(private val db: AyudaDatabase) : AyudaRepository {
     private val categoriaDao = db.categoriaDao()
     private val usuarioDao = db.usuarioDao()
     private val ticketDao = db.ticketDao()
+    private val notificacionDao = db.notificacionDao()
 
     // ---------- Usuarios ----------
     override suspend fun login(correo: String, clave: String): Usuario? =
@@ -78,7 +80,9 @@ class AyudaRepositoryRoom(private val db: AyudaDatabase) : AyudaRepository {
             estado = EstadoTicket.ABIERTO.name,
             fecha = System.currentTimeMillis()
         )
-        return ticketDao.insertarTicket(ticket)
+        val id = ticketDao.insertarTicket(ticket)
+        avisarSoporte(id.toInt(), "Nuevo ticket ${numero(id.toInt())}", "$titulo · prioridad ${prioridad.etiqueta}")
+        return id
     }
 
     override fun observarTicketsCliente(clienteId: Int): Flow<List<TicketConDetalle>> =
@@ -89,27 +93,55 @@ class AyudaRepositoryRoom(private val db: AyudaDatabase) : AyudaRepository {
 
     override fun observarTicket(id: Int): Flow<TicketConDetalle?> = ticketDao.observarUno(id)
 
-    override suspend fun cambiarEstado(ticketId: Int, estado: EstadoTicket) =
+    override suspend fun cambiarEstado(ticketId: Int, estado: EstadoTicket) {
         ticketDao.actualizarEstado(ticketId, estado.name)
+        avisarCliente(ticketId, "Tu ticket ${numero(ticketId)} cambió de estado", "Ahora está: ${estado.etiqueta}")
+    }
 
-    override suspend fun cambiarPrioridad(ticketId: Int, prioridad: Prioridad) =
+    override suspend fun cambiarPrioridad(ticketId: Int, prioridad: Prioridad) {
         ticketDao.actualizarPrioridad(ticketId, prioridad.name)
+        avisarCliente(ticketId, "Prioridad actualizada en ${numero(ticketId)}", "Nueva prioridad: ${prioridad.etiqueta}")
+    }
 
-    override suspend fun cerrarConCalificacion(ticketId: Int, calificacion: Int) =
+    override suspend fun cerrarConCalificacion(ticketId: Int, calificacion: Int) {
         ticketDao.cerrar(ticketId, calificacion, System.currentTimeMillis())
+        avisarSoporte(
+            ticketId, "Ticket ${numero(ticketId)} cerrado",
+            "El estudiante calificó la atención con $calificacion de 5 estrellas"
+        )
+    }
 
-    override suspend fun reabrir(ticketId: Int) = ticketDao.reabrir(ticketId)
+    override suspend fun reabrir(ticketId: Int) {
+        ticketDao.reabrir(ticketId)
+        avisarSoporte(ticketId, "Ticket ${numero(ticketId)} reabierto", "El estudiante indicó que el problema continúa")
+    }
 
-    override suspend fun agregarComentario(ticketId: Int, autor: Usuario, texto: String) {
+    override suspend fun agregarComentario(
+        ticketId: Int,
+        autor: Usuario,
+        texto: String,
+        interno: Boolean
+    ) {
+        // Regla: solo Soporte (ADMIN) puede escribir notas internas
+        val esInterno = interno && autor.rol == Rol.ADMIN.name
         val comentario = Comentario(
             ticketId = ticketId,
             autorId = autor.id,
             autorNombre = autor.nombre,
             autorRol = autor.rol,
             texto = texto,
-            fecha = System.currentTimeMillis()
+            fecha = System.currentTimeMillis(),
+            interno = esInterno
         )
         ticketDao.insertarComentario(comentario)
+
+        // Las notas internas NO generan avisos
+        if (esInterno) return
+        if (autor.rol == Rol.ADMIN.name) {
+            avisarCliente(ticketId, "Soporte respondió tu ticket ${numero(ticketId)}", texto.take(100))
+        } else {
+            avisarSoporte(ticketId, "Nuevo comentario en ${numero(ticketId)}", "${autor.nombre}: ${texto.take(100)}")
+        }
     }
 
     // ---------- Panel ----------
@@ -124,4 +156,35 @@ class AyudaRepositoryRoom(private val db: AyudaDatabase) : AyudaRepository {
 
     override fun observarTiempoPromedioResolucion(): Flow<Double?> =
         ticketDao.observarTiempoPromedioResolucion()
+
+    // ---------- Notificaciones ----------
+    override fun observarNotificaciones(usuario: Usuario): Flow<List<Notificacion>> =
+        if (usuario.rol == Rol.ADMIN.name) notificacionDao.observarDeSoporte()
+        else notificacionDao.observarDeUsuario(usuario.id)
+
+    override fun observarUltimaNotificacion(): Flow<Notificacion?> = notificacionDao.observarUltima()
+
+    override suspend fun marcarNotificacionLeida(id: Int) = notificacionDao.marcarLeida(id)
+
+    override suspend fun marcarTodasLeidas(usuario: Usuario) {
+        if (usuario.rol == Rol.ADMIN.name) notificacionDao.marcarTodasDeSoporte()
+        else notificacionDao.marcarTodasDeUsuario(usuario.id)
+    }
+
+    private fun numero(id: Int): String = "#" + id.toString().padStart(4, '0')
+
+    private suspend fun avisarSoporte(ticketId: Int, titulo: String, mensaje: String) =
+        notificacionDao.insertar(
+            Notificacion(paraRol = Rol.ADMIN.name, ticketId = ticketId, titulo = titulo, mensaje = mensaje)
+        )
+
+    private suspend fun avisarCliente(ticketId: Int, titulo: String, mensaje: String) {
+        val clienteId = ticketDao.clienteDe(ticketId) ?: return
+        notificacionDao.insertar(
+            Notificacion(
+                usuarioId = clienteId, paraRol = Rol.CLIENTE.name,
+                ticketId = ticketId, titulo = titulo, mensaje = mensaje
+            )
+        )
+    }
 }

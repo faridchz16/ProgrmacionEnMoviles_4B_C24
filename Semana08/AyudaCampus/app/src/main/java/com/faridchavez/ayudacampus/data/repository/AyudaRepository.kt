@@ -8,6 +8,7 @@ import com.faridchavez.ayudacampus.model.EstadoTicket
 import com.faridchavez.ayudacampus.model.Prioridad
 import com.faridchavez.ayudacampus.model.Rol
 import kotlinx.coroutines.flow.Flow
+import com.faridchavez.ayudacampus.data.local.entity.Notificacion
 
 interface AyudaRepository {
 
@@ -46,11 +47,17 @@ interface AyudaRepository {
     suspend fun cambiarPrioridad(ticketId: Int, prioridad: Prioridad)
     suspend fun cerrarConCalificacion(ticketId: Int, calificacion: Int)
     suspend fun reabrir(ticketId: Int)
-    suspend fun agregarComentario(ticketId: Int, autor: Usuario, texto: String)
+    suspend fun agregarComentario(ticketId: Int, autor: Usuario, texto: String, interno: Boolean = false)
 
     // Panel
     fun observarCantidadPorEstado(estado: EstadoTicket): Flow<Int>
     fun observarCantidadPorCategoria(): Flow<List<ConteoCategoria>>
     fun observarAltasSinAtender(limite: Long): Flow<Int>
     fun observarTiempoPromedioResolucion(): Flow<Double?>
+
+    // Notificaciones
+    fun observarNotificaciones(usuario: Usuario): Flow<List<Notificacion>>
+    fun observarUltimaNotificacion(): Flow<Notificacion?>
+    suspend fun marcarNotificacionLeida(id: Int)
+    suspend fun marcarTodasLeidas(usuario: Usuario)
 }

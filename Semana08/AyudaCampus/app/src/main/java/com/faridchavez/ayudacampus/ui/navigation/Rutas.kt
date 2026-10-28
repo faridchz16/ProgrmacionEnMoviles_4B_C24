@@ -14,6 +14,7 @@ object Rutas {
     const val DETALLE_TICKET = "cliente/ticket/{id}"
     const val PERFIL = "cliente/perfil"
     fun detalleTicket(id: Int) = "cliente/ticket/$id"
+    const val NOTIF_CLIENTE = "cliente/notificaciones"
 
     // Grafo de Soporte TI (ADMIN)
     const val GRAFO_SOPORTE = "soporte"
@@ -23,6 +24,7 @@ object Rutas {
     const val CATEGORIAS = "soporte/categorias"
     const val FORM_CATEGORIA = "soporte/categoria?id={id}"
     const val AJUSTES = "soporte/ajustes"
+    const val NOTIF_SOPORTE = "soporte/notificaciones"
     fun atenderTicket(id: Int) = "soporte/atender/$id"
     fun formCategoria(id: Int? = null) =
         if (id == null) "soporte/categoria" else "soporte/categoria?id=$id"

@@ -22,7 +22,10 @@ class TicketDetalleViewModel(
 ) : ViewModel() {
 
     val ticket: StateFlow<TicketConDetalle?> = repo.observarTicket(ticketId)
-        .map { t -> t?.takeIf { it.ticket.clienteId == usuario.id } }
+        .map { t ->
+            if (t == null || t.ticket.clienteId != usuario.id) null
+            else t.copy(comentarios = t.comentarios.filter { !it.interno })
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _mensaje = MutableStateFlow<String?>(null)
