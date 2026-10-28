@@ -70,6 +70,19 @@ Además, agregué manualmente (sin IA) el botón para mostrar u ocultar la contr
 
 **¿Respeta MVVM?:** Sí. La regla de visibilidad está en el ViewModel del estudiante (la pantalla no sabe que existen notas internas), la regla del rol está en el repositorio y la View solo muestra el chip y el estilo distinto.
 
+## Prompt 6 · Animaciones y estados vacíos
+
+**Texto enviado a Gemini:**
+> En la misma app (Compose + Material 3 + MVVM), agrega animaciones y estados vacíos SOLO en la capa View (no toques ViewModels, Repository ni DAO): 1) transiciones de entrada y salida entre pantallas en el NavHost de NavAyuda, 2) anima el componente StepperTicket (la línea entre pasos se llena, el check aparece con animación y el paso actual tiene un pulso), 3) mejora el componente EstadoVacio con una ilustración (ícono grande dentro de un círculo con animación suave), un título, una descripción y un botón de acción opcional, y úsalo en Mis tickets, la Bandeja y Notificaciones, 4) anima los ítems de las listas al filtrar con animateItem. No uses XML. Muéstrame solo los archivos que cambian.
+
+**Qué generó la IA:** Gemini (modo Ask) agregó transiciones de deslizar y desvanecer en el `NavHost`, animó el `StepperTicket` (línea que se llena con retraso por paso, check con `scaleIn` y `spring`, halo con pulso en el paso actual), rediseñó `EstadoVacio` con un ícono dentro de un círculo que late, título, descripción y botón opcional, lo usó con mensajes distintos en Mis tickets, la Bandeja y Notificaciones, y envolvió las tarjetas de las listas con `animateItem()`. Respetó el pedido de no tocar ViewModels, Repository ni DAO.
+
+**Qué tuve que corregir yo:** No resolvió que el texto del SLA quedaba tapado por el botón "+" en Mis tickets; modifiqué `TicketCard` para mostrar el SLA en su propia línea. También noté que el botón "Limpiar filtros" de Mis tickets llama a dos funciones del ViewModel desde la View; sería más limpio una sola función en el ViewModel.
+
+**¿Respeta MVVM?:** Sí. Todos los cambios son de la capa View. Las animaciones reaccionan al estado que ya exponen los ViewModels; por ejemplo, el stepper se anima solo cuando cambia el `StateFlow` del ticket.
+
+Además, agregué manualmente (sin IA) las notificaciones: campanita con contador y notificaciones de Android.
+
 ## Reflexión (5 líneas)
 - ¿Qué mejoró la IA y qué no?
 La IA acertó al ubicar cada pieza en su capa (consulta en el DAO, Flow en el Repository, StateFlow en el ViewModel) y usó bien combine y stateIn, pero no reutilizó lo que ya existía (Prioridad.horasRespuesta, el formateo del tiempo).

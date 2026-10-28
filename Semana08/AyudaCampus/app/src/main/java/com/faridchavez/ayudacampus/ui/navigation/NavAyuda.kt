@@ -1,6 +1,11 @@
 package com.faridchavez.ayudacampus.ui.navigation
 
 import android.app.Activity
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
@@ -127,7 +132,11 @@ fun NavAyuda() {
             NavHost(
                 navController = nav,
                 startDestination = Rutas.SPLASH,
-                modifier = Modifier.padding(padding)
+                modifier = Modifier.padding(padding),
+                enterTransition = { fadeIn(tween(300)) + slideInHorizontally(tween(300)) { 300 } },
+                exitTransition = { fadeOut(tween(300)) + slideOutHorizontally(tween(300)) { -300 } },
+                popEnterTransition = { fadeIn(tween(300)) + slideInHorizontally(tween(300)) { -300 } },
+                popExitTransition = { fadeOut(tween(300)) + slideOutHorizontally(tween(300)) { 300 } }
             ) {
                 composable(Rutas.SPLASH) {
                     SplashScreen(onComenzar = { nav.navigate(Rutas.LOGIN) })
@@ -147,7 +156,6 @@ fun NavAyuda() {
                     RegistroScreen(
                         vm = vm,
                         onAtras = { nav.popBackStack() },
-                        // La sesión cambia → el LaunchedEffect de arriba navega a Mis tickets
                         onRegistrado = { usuario -> sesion.iniciarSesion(usuario) }
                     )
                 }
@@ -168,8 +176,8 @@ fun NavAyuda() {
                             vm = vm,
                             onAbrir = { id -> nav.navigate(Rutas.detalleTicket(id)) },
                             onNuevo = { nav.irA(Rutas.NUEVO_TICKET, Rutas.MIS_TICKETS) },
-                            noLeidas = noLeidas,                                          // ← nuevo
-                            onNotificaciones = { nav.navigate(Rutas.NOTIF_CLIENTE) }      // ← nuevo
+                            noLeidas = noLeidas,
+                            onNotificaciones = { nav.navigate(Rutas.NOTIF_CLIENTE) }
                         )
                     }
                     composable(Rutas.NUEVO_TICKET) {
@@ -195,7 +203,6 @@ fun NavAyuda() {
                         DetalleTicketScreen(vm = vm, onAtras = { nav.popBackStack() })
                     }
                     composable(Rutas.PERFIL) { PerfilScreen(vm = sesion) }
-                    // ← nuevo: avisos del estudiante (tocar uno abre el detalle del ticket)
                     composable(Rutas.NOTIF_CLIENTE) {
                         val vm = notifVm ?: return@composable
                         NotificacionesScreen(
@@ -213,8 +220,8 @@ fun NavAyuda() {
                         PanelScreen(
                             vm = vm,
                             onVerAlerta = { nav.irA(Rutas.BANDEJA, Rutas.PANEL) },
-                            noLeidas = noLeidas,                                          // ← nuevo
-                            onNotificaciones = { nav.navigate(Rutas.NOTIF_SOPORTE) }      // ← nuevo
+                            noLeidas = noLeidas,
+                            onNotificaciones = { nav.navigate(Rutas.NOTIF_SOPORTE) }
                         )
                     }
                     composable(Rutas.BANDEJA) {
@@ -259,7 +266,6 @@ fun NavAyuda() {
                         )
                     }
                     composable(Rutas.AJUSTES) { AjustesScreen(vm = sesion) }
-                    // ← nuevo: avisos de Soporte (tocar uno abre "Atender ticket")
                     composable(Rutas.NOTIF_SOPORTE) {
                         val vm = notifVm ?: return@composable
                         NotificacionesScreen(

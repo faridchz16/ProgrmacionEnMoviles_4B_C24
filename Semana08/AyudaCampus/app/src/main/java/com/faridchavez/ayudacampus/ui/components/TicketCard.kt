@@ -88,6 +88,15 @@ fun TicketCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    // SLA en su propia línea: ya no lo tapa el botón "+"
+                    if (slaInfo != null) {
+                        Text(
+                            slaInfo.texto,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = slaInfo.color,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                     Spacer(Modifier.height(10.dp))
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -96,13 +105,6 @@ fun TicketCard(
                         EstadoChip(estado)
                         PrioridadChip(prioridad)
                         Spacer(Modifier.weight(1f))
-                        if (slaInfo != null) {
-                            Text(
-                                slaInfo.texto,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = slaInfo.color
-                            )
-                        }
                         Text(
                             tiempoRelativo(fecha),
                             style = MaterialTheme.typography.labelSmall,

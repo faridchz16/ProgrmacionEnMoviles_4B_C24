@@ -2,6 +2,7 @@ package com.faridchavez.ayudacampus.ui.soporte
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.outlined.FilterListOff
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -185,23 +187,31 @@ fun BandejaScreen(vm: BandejaViewModel, onAtender: (Int) -> Unit) {
             }
 
             if (tickets.isEmpty()) {
-                EstadoVacio("No hay tickets con los filtros seleccionados")
+                EstadoVacio(
+                    titulo = "No hay tickets que coincidan",
+                    descripcion = "Prueba cambiando la búsqueda o limpiando los filtros seleccionados.",
+                    icono = Icons.Outlined.FilterAlt,
+                    textoBoton = if (hayFiltros) "Limpiar todos los filtros" else null,
+                    onAccion = if (hayFiltros) vm::limpiarFiltros else null
+                )
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(tickets, key = { it.ticket.id }) { t ->
-                        TicketCard(
-                            titulo = t.ticket.titulo,
-                            detalle = "${numeroTicket(t.ticket.id)} · ${t.cliente?.nombre ?: "Sin cliente"}",
-                            icono = t.categoria?.icono,
-                            estado = t.estado,
-                            prioridad = t.prioridad,
-                            fecha = t.ticket.fecha,
-                            slaInfo = vm.calcularSla(t.ticket.fecha, t.prioridad, t.estado, ahora),
-                            onClick = { onAtender(t.ticket.id) }
-                        )
+                        Box(Modifier.animateItem()) {
+                            TicketCard(
+                                titulo = t.ticket.titulo,
+                                detalle = "${numeroTicket(t.ticket.id)} · ${t.cliente?.nombre ?: "Sin cliente"}",
+                                icono = t.categoria?.icono,
+                                estado = t.estado,
+                                prioridad = t.prioridad,
+                                fecha = t.ticket.fecha,
+                                slaInfo = vm.calcularSla(t.ticket.fecha, t.prioridad, t.estado, ahora),
+                                onClick = { onAtender(t.ticket.id) }
+                            )
+                        }
                     }
                 }
             }

@@ -2,6 +2,7 @@ package com.faridchavez.ayudacampus.ui.cliente
 
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,7 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -38,11 +39,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.faridchavez.ayudacampus.data.local.relation.estado
 import com.faridchavez.ayudacampus.data.local.relation.prioridad
 import com.faridchavez.ayudacampus.model.EstadoTicket
+import com.faridchavez.ayudacampus.ui.components.CampanaNotificaciones
 import com.faridchavez.ayudacampus.ui.components.EstadoVacio
 import com.faridchavez.ayudacampus.ui.components.TicketCard
 import com.faridchavez.ayudacampus.ui.components.numeroTicket
 import com.faridchavez.ayudacampus.viewmodel.MisTicketsViewModel
-import com.faridchavez.ayudacampus.ui.components.CampanaNotificaciones
 
 private val FILTROS = listOf(
     null to "Todos",
@@ -65,6 +66,8 @@ fun MisTicketsScreen(
     val busqueda by vm.busqueda.collectAsStateWithLifecycle()
     val abiertos by vm.abiertos.collectAsStateWithLifecycle()
     val ahora by vm.ahora.collectAsStateWithLifecycle()
+
+    val hayFiltro = filtro != null || busqueda.isNotBlank()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -139,23 +142,44 @@ fun MisTicketsScreen(
             Spacer(Modifier.height(8.dp))
 
             if (tickets.isEmpty()) {
-                EstadoVacio("No tienes tickets aquí")
+                if (hayFiltro) {
+                    EstadoVacio(
+                        titulo = "Sin resultados para la búsqueda",
+                        descripcion = "Prueba cambiando el texto o seleccionando la pestaña 'Todos'.",
+                        icono = Icons.Outlined.Search,
+                        textoBoton = "Limpiar filtros",
+                        onAccion = {
+                            vm.seleccionarFiltro(null)
+                            vm.buscar("")
+                        }
+                    )
+                } else {
+                    EstadoVacio(
+                        titulo = "No tienes tickets aún",
+                        descripcion = "Crea un ticket de soporte para recibir ayuda con tus equipos o instalaciones.",
+                        icono = Icons.Outlined.ConfirmationNumber,
+                        textoBoton = "Nuevo ticket",
+                        onAccion = onNuevo
+                    )
+                }
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(tickets, key = { it.ticket.id }) { t ->
-                        TicketCard(
-                            titulo = t.ticket.titulo,
-                            detalle = "${numeroTicket(t.ticket.id)} · ${t.ticket.ubicacion}",
-                            icono = t.categoria?.icono,
-                            estado = t.estado,
-                            prioridad = t.prioridad,
-                            fecha = t.ticket.fecha,
-                            slaInfo = vm.calcularSla(t.ticket.fecha, t.prioridad, t.estado, ahora),
-                            onClick = { onAbrir(t.ticket.id) }
-                        )
+                        Box(Modifier.animateItem()) {
+                            TicketCard(
+                                titulo = t.ticket.titulo,
+                                detalle = "${numeroTicket(t.ticket.id)} · ${t.ticket.ubicacion}",
+                                icono = t.categoria?.icono,
+                                estado = t.estado,
+                                prioridad = t.prioridad,
+                                fecha = t.ticket.fecha,
+                                slaInfo = vm.calcularSla(t.ticket.fecha, t.prioridad, t.estado, ahora),
+                                onClick = { onAbrir(t.ticket.id) }
+                            )
+                        }
                     }
                 }
             }

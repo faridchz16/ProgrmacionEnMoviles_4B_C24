@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.NotificationsOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -73,20 +74,26 @@ fun NotificacionesScreen(
             }
 
             if (lista.isEmpty()) {
-                EstadoVacio("No tienes notificaciones")
+                EstadoVacio(
+                    titulo = "Sin notificaciones por ahora",
+                    descripcion = "Te avisaremos aquí cuando haya novedades en tus tickets de soporte.",
+                    icono = Icons.Outlined.NotificationsOff
+                )
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(top = 4.dp, bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(lista, key = { it.id }) { n ->
-                        TarjetaNotificacion(
-                            n = n,
-                            onClick = {
-                                vm.abrir(n)
-                                n.ticketId?.let(onAbrirTicket)
-                            }
-                        )
+                        Box(Modifier.animateItem()) {
+                            TarjetaNotificacion(
+                                n = n,
+                                onClick = {
+                                    vm.abrir(n)
+                                    n.ticketId?.let(onAbrirTicket)
+                                }
+                            )
+                        }
                     }
                 }
             }
